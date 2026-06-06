@@ -82,7 +82,6 @@ class Database:
     # ── Invites ───────────────────────────────────────────────────────────────
 
     def track_invite(self, inviter_id: int, invited_id: int):
-        """Record that inviter_id brought invited_id to the bot."""
         with self._conn() as conn:
             try:
                 conn.execute(
