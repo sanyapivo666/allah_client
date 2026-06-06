@@ -1,8 +1,10 @@
 import asyncio
 import logging
+import os
 import random
 from datetime import datetime
 
+from aiohttp import web
 from aiogram import Bot, Dispatcher, F, Router
 from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
@@ -663,9 +665,26 @@ async def admin_back(callback: CallbackQuery):
     await callback.answer()
 
 
+# ── Keep-alive web server ──────────────────────────────────────────────────────
+
+async def handle_health(request: web.Request) -> web.Response:
+    return web.Response(text="OK")
+
+async def run_web_server():
+    app = web.Application()
+    app.router.add_get("/health", handle_health)
+    port = int(os.getenv("PORT", 10000))
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, "0.0.0.0", port)
+    await site.start()
+    logger.info(f"Healthcheck server running on port {port}")
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 async def main():
+    await run_web_server()
     bot = Bot(token=BOT_TOKEN)
     dp  = Dispatcher(storage=MemoryStorage())
     dp.include_router(router)
