@@ -4,7 +4,7 @@ import os
 import random
 from datetime import datetime
 
-from aiohttp import ClientSession, web
+from aiohttp import ClientSession, ClientTimeout, web
 from aiogram import Bot, Dispatcher, F, Router
 from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
@@ -681,11 +681,14 @@ async def run_web_server():
     logger.info(f"Healthcheck server running on port {port}")
 
 async def self_ping():
-    port = int(os.getenv("PORT", 10000))
+    url = os.getenv("RENDER_EXTERNAL_URL")
+    if not url:
+        port = os.getenv("PORT", 10000)
+        url = f"http://localhost:{port}"
     while True:
         try:
             async with ClientSession() as session:
-                await session.get(f"http://localhost:{port}/health")
+                await session.get(f"{url}/health", timeout=aiohttp.ClientTimeout(total=5))
         except Exception:
             pass
         await asyncio.sleep(10)
